@@ -1,7 +1,3 @@
-for contributors can join https://t.me/+hR9dZKau8f84YTk0 telegram group 
-
-
-
 InsightArena is a next-generation decentralized prediction market platform built natively on the **[Stellar network](https://stellar.org/)**. By leveraging Stellar's high-throughput consensus protocol and the robust **Soroban** smart contract environment, InsightArena provides users with a lightning-fast, highly secure, and incredibly cost-effective way to participate in global prediction events and competitive leaderboard challenges.
 
 Users can submit predictions on real-world outcomes such as sports results, crypto prices, or other measurable events. Thanks to Stellar's nearly instant transaction finality and fraction-of-a-cent fees, participants can interact with markets seamlessly without the friction found on other blockchains. All predictions, outcomes, and payouts are automatically resolved and recorded transparently through secure Soroban smart contracts.
