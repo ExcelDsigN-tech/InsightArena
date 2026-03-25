@@ -1,7 +1,11 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MarketsService } from './markets.service';
 import { Market } from './entities/market.entity';
+import {
+  ListMarketsDto,
+  PaginatedMarketsResponse,
+} from './dto/list-markets.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Markets')
@@ -11,21 +15,20 @@ export class MarketsController {
 
   @Get()
   @Public()
-  @ApiOperation({ summary: 'Fetch all markets' })
+  @ApiOperation({ summary: 'List and filter markets with pagination' })
   @ApiResponse({
     status: 200,
-    description: 'Markets retrieved successfully',
-    type: [Market],
+    description: 'Paginated markets list',
   })
-  async getAllMarkets(): Promise<Market[]> {
-    return this.marketsService.findAll();
+  async listMarkets(
+    @Query() query: ListMarketsDto,
+  ): Promise<PaginatedMarketsResponse> {
+    return this.marketsService.findAllFiltered(query);
   }
 
   @Get(':id')
   @Public()
-  @ApiOperation({
-    summary: 'Fetch market by UUID or on-chain market ID',
-  })
+  @ApiOperation({ summary: 'Fetch market by ID' })
   @ApiResponse({
     status: 200,
     description: 'Market with nested creator profile',
