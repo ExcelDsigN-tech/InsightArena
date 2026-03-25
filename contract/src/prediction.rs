@@ -264,7 +264,10 @@ pub fn list_market_predictions(env: &Env, market_id: u64) -> Vec<Prediction> {
 
     for predictor in predictors.iter() {
         let pred_key = DataKey::Prediction(market_id, predictor.clone());
-        if let Some(prediction) = env.storage().persistent().get::<DataKey, Prediction>(&pred_key)
+        if let Some(prediction) = env
+            .storage()
+            .persistent()
+            .get::<DataKey, Prediction>(&pred_key)
         {
             bump_prediction(env, market_id, &predictor);
             results.push_back(prediction);
@@ -960,7 +963,10 @@ mod prediction_tests {
         let market_after = client.get_market(&market_id);
 
         assert_eq!(market_before.total_pool, market_after.total_pool);
-        assert_eq!(market_before.participant_count, market_after.participant_count);
+        assert_eq!(
+            market_before.participant_count,
+            market_after.participant_count
+        );
     }
 
     // ── list_market_predictions tests ─────────────────────────────────────
