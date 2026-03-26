@@ -69,6 +69,30 @@ pub fn release_payout(env: &Env, to: &Address, amount: i128) -> Result<(), Insig
     Ok(())
 }
 
+/// Transfer accumulated fee to a designated treasury or creator address.
+///
+/// This moves funds out of the shared prediction pool.
+///
+/// # Errors
+/// - `InvalidInput` when `amount <= 0`.
+/// - `EscrowEmpty` if the contract lacks sufficient balance.
+pub fn transfer_fee(env: &Env, to: &Address, amount: i128) -> Result<(), InsightArenaError> {
+    if amount <= 0 {
+        return Err(InsightArenaError::InvalidInput);
+    }
+
+    let cfg = config::get_config(env)?;
+    let client = token::Client::new(env, &cfg.xlm_token);
+    let contract = env.current_contract_address();
+
+    if client.balance(&contract) < amount {
+        return Err(InsightArenaError::EscrowEmpty);
+    }
+
+    client.transfer(&contract, to, &amount);
+    Ok(())
+}
+
 #[cfg(test)]
 mod escrow_tests {
     use soroban_sdk::testutils::Address as _;
@@ -77,7 +101,7 @@ mod escrow_tests {
 
     use crate::{InsightArenaContract, InsightArenaContractClient, InsightArenaError};
 
-    use super::{lock_stake, release_payout};
+    use super::{lock_stake, release_payout, transfer_fee};
 
     fn register_token(env: &Env) -> Address {
         let token_admin = Address::generate(env);
@@ -207,6 +231,84 @@ mod escrow_tests {
         let recipient = Address::generate(&env);
 
         let result = env.as_contract(&client.address, || release_payout(&env, &recipient, 0));
+        assert_eq!(result, Err(InsightArenaError::InvalidInput));
+    }
+
+    #[test]
+    fn test_transfer_fee_creator_payout() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let xlm_token = register_token(&env);
+        let client = deploy(&env, &xlm_token);
+        
+        // Mock a creator address
+        let creator = Address::generate(&env);
+        let amount = 5_000_000_i128; // Example fee amount
+        
+        // Fund the contract to simulate accumulated fees
+        fund(&env, &xlm_token, &client.address, amount);
+        
+        let token = TokenClient::new(&env, &xlm_token);
+        assert_eq!(token.balance(&client.address), amount);
+        assert_eq!(token.balance(&creator), 0);
+        
+        // Execute transfer
+        let result = env.as_contract(&client.address, || transfer_fee(&env, &creator, amount));
+        assert_eq!(result, Ok(()));
+        
+        // Verify balance shifted correctly to the creator Address
+        assert_eq!(token.balance(&client.address), 0);
+        assert_eq!(token.balance(&creator), amount);
+    }
+
+    #[test]
+    fn test_transfer_fee_protocol_payout() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let xlm_token = register_token(&env);
+        let client = deploy(&env, &xlm_token);
+        
+        // Mock a treasury address
+        let treasury = Address::generate(&env);
+        let amount = 2_500_000_i128; // Example fee amount
+        
+        // Fund the contract to simulate accumulated fees
+        fund(&env, &xlm_token, &client.address, amount);
+        
+        let token = TokenClient::new(&env, &xlm_token);
+        assert_eq!(token.balance(&client.address), amount);
+        assert_eq!(token.balance(&treasury), 0);
+        
+        // Execute transfer
+        let result = env.as_contract(&client.address, || transfer_fee(&env, &treasury, amount));
+        assert_eq!(result, Ok(()));
+        
+        // Verify balance shifted correctly to the treasury Address
+        assert_eq!(token.balance(&client.address), 0);
+        assert_eq!(token.balance(&treasury), amount);
+    }
+
+    #[test]
+    fn test_transfer_fee_zero_value() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let xlm_token = register_token(&env);
+        let client = deploy(&env, &xlm_token);
+        let recipient = Address::generate(&env);
+
+        let result = env.as_contract(&client.address, || transfer_fee(&env, &recipient, 0));
+        assert_eq!(result, Err(InsightArenaError::InvalidInput));
+    }
+
+    #[test]
+    fn test_transfer_fee_negative_value() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let xlm_token = register_token(&env);
+        let client = deploy(&env, &xlm_token);
+        let recipient = Address::generate(&env);
+
+        let result = env.as_contract(&client.address, || transfer_fee(&env, &recipient, -100));
         assert_eq!(result, Err(InsightArenaError::InvalidInput));
     }
 }
