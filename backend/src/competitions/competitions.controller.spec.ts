@@ -85,9 +85,9 @@ describe('CompetitionsController', () => {
         .spyOn(service, 'list')
         .mockResolvedValue(mockResponse);
 
-      const result = await controller.listCompetitions({});
+      const result = await controller.listCompetitions({ page: 1, limit: 20 });
 
-      expect(spy).toHaveBeenCalledWith({});
+      expect(spy).toHaveBeenCalledWith({ page: 1, limit: 20 });
       expect(result).toEqual(mockResponse);
     });
   });
