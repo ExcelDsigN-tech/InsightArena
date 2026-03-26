@@ -16,7 +16,7 @@ export class CreateCompetitionEntity1774500001000 implements MigrationInterface 
         "start_time"          TIMESTAMP WITH TIME ZONE NOT NULL,
         "end_time"            TIMESTAMP WITH TIME ZONE NOT NULL,
         "prize_pool_stroops"  bigint            NOT NULL DEFAULT 0,
-        "max_participants"    integer,
+        "max_participants"    integer           NOT NULL DEFAULT 0,
         "participant_count"   integer           NOT NULL DEFAULT 0,
         "is_finalized"        boolean           NOT NULL DEFAULT false,
         "visibility"          "public"."competitions_visibility_enum" NOT NULL DEFAULT 'public',
